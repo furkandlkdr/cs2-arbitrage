@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CS2 Arbitraj Otomasyonu (SaaS)
 
-## Getting Started
+Steam ve 3. parti pazar yerleri (CS Float vb.) arasında arbitraj yapan kullanıcıların manuel hesaplamalarını otomatize eden ve portföylerini takip etmelerini sağlayan bir web uygulamasıdır.
 
-First, run the development server:
+## Özellikler
+- **Çift Aşamalı Arbitraj Hesaplayıcı:** Platform A'dan B'ye ve B'den A'ya yapılan işlemlerin net kar ve ROI hesaplaması.
+- **İşlem Takibi (Trade Tracker):** Aktif pozisyonların kaydedilmesi ve 7 günlük takas banı için geri sayım.
+- **Finansal Dashboard:** Kullanıcının toplam bakiyesini, aktif işlemlerini ve ROI durumunu gösteren modern arayüz.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Teknolojiler
+- Next.js (App Router)
+- Tailwind CSS & Shadcn/UI
+- Zustand (State Management)
+- Supabase (Database & Auth)
+- Recharts (Grafikler)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Kurulum
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Bağımlılıkları yükleyin:
+   ```bash
+   npm install
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. `.env.local` dosyasını oluşturun ve Supabase bilgilerinizi girin:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
 
-## Learn More
+3. Geliştirme sunucusunu başlatın:
+   ```bash
+   npm run dev
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+## GitHub Pages'e Deploy Etme
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Proje statik olarak dışa aktarılacak (`output: 'export'`) şekilde yapılandırılmıştır.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. `next.config.ts` dosyasındaki `basePath` ve `assetPrefix` ayarlarını GitHub deponuzun adına göre güncelleyin (örn: `/cs2-arbitraj`).
+2. Deploy komutunu çalıştırın:
+   ```bash
+   npm run deploy
+   ```
