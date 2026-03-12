@@ -1,5 +1,13 @@
 # CS Arbitrage Tracker
 
+<p align="center">
+	<img src="public/logo.png" alt="CS Arbitrage Tracker Logo" width="220">
+</p>
+
+<p align="center">
+	Steam ve CSFloat işlemlerini hızlıca hesaplamak, kaydetmek ve takip etmek için sade arayüz.
+</p>
+
 Bu proje şu anda tek ekranlı, tarayıcıda çalışan bir arbitraj takip aracı olarak sadeleştirildi. Amaç, eski prototipteki davranışı Next.js uygulaması içinde sürdürmek:
 
 - Steam -> CSFloat ve CSFloat -> Steam islemleri
