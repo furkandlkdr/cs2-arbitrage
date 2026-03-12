@@ -32,6 +32,7 @@ export default function TradeTable({ trades, onEdit, onDelete }: TradeTableProps
                     {meta.shortLabel}
                   </span>
                   <h3 className="mt-3 text-base font-semibold text-[var(--text-primary)]">{trade.name}</h3>
+                  <p className="mt-1 text-sm text-[var(--text-muted)]">Adet: {trade.quantity}</p>
                 </div>
                 <p className={`font-mono text-sm font-semibold ${profitable ? 'text-[var(--good)]' : 'text-[var(--bad)]'}`}>
                   {trade.efficiency.toFixed(3)}
@@ -40,8 +41,8 @@ export default function TradeTable({ trades, onEdit, onDelete }: TradeTableProps
 
               <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                 <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-3">
-                  <p className="text-xs uppercase tracking-[0.16em] text-[var(--text-muted)]">Alış</p>
-                  <p className="mt-2 font-mono text-[var(--text-secondary)]">{formatMoney(trade.buy)}</p>
+                  <p className="text-xs uppercase tracking-[0.16em] text-[var(--text-muted)]">Toplam Alış</p>
+                  <p className="mt-2 font-mono text-[var(--text-secondary)]">{formatMoney(trade.totalBuy)}</p>
                 </div>
                 <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-3">
                   <p className="text-xs uppercase tracking-[0.16em] text-[var(--text-muted)]">Net Satış</p>
@@ -74,7 +75,7 @@ export default function TradeTable({ trades, onEdit, onDelete }: TradeTableProps
         <table className="min-w-full text-left">
           <thead className="bg-[var(--surface-muted)]">
             <tr>
-              {['Tip', 'Eşya', 'Alış', 'Net Satış', 'Verim', 'İşlem'].map((label) => (
+              {['Tip', 'Eşya', 'Adet', 'Toplam Alış', 'Net Satış', 'Verim', 'İşlem'].map((label) => (
                 <th key={label} className="px-5 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
                   {label}
                 </th>
@@ -94,7 +95,8 @@ export default function TradeTable({ trades, onEdit, onDelete }: TradeTableProps
                     </span>
                   </td>
                   <td className="px-5 py-4 text-[var(--text-primary)]">{trade.name}</td>
-                  <td className="px-5 py-4 font-mono text-[var(--text-secondary)]">{formatMoney(trade.buy)}</td>
+                  <td className="px-5 py-4 font-mono text-[var(--text-secondary)]">{trade.quantity}</td>
+                  <td className="px-5 py-4 font-mono text-[var(--text-secondary)]">{formatMoney(trade.totalBuy)}</td>
                   <td className="px-5 py-4 font-mono font-semibold text-[var(--sky-text)]">{formatMoney(trade.netSell)}</td>
                   <td className={`px-5 py-4 font-mono font-semibold ${profitable ? 'text-[var(--good)]' : 'text-[var(--bad)]'}`}>
                     {trade.efficiency.toFixed(3)}

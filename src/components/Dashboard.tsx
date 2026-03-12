@@ -16,6 +16,7 @@ const STORAGE_KEY = 'cs-arbitraj-local';
 const defaultDraft: TradeDraft = {
   type: 's2f',
   name: '',
+  quantity: 1,
   buy: 0,
   sell: 0,
 };
@@ -83,8 +84,8 @@ export default function Dashboard() {
   };
 
   const submitTrade = () => {
-    if (!draft.buy || !draft.sell) {
-      window.alert('Lütfen fiyatları girin.');
+    if (!draft.quantity || !draft.buy || !draft.sell) {
+      window.alert('Lütfen adet ve fiyatları girin.');
       return;
     }
 
@@ -107,6 +108,7 @@ export default function Dashboard() {
     setDraft({
       type: trade.type,
       name: trade.name,
+      quantity: trade.quantity,
       buy: trade.buy,
       sell: trade.sell,
     });
@@ -168,6 +170,18 @@ export default function Dashboard() {
             </section>
           )}
         </div>
+
+          <footer className="mt-8 border-t border-[var(--border-soft)] pt-5 text-center text-sm text-[var(--text-muted)]">
+            made with ❤️ by{' '}
+            <a
+              href="https://www.furkan.software/"
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-[var(--sky-text)] transition hover:opacity-80"
+            >
+              Nafair
+            </a>
+          </footer>
       </div>
     </main>
   );

@@ -3,12 +3,15 @@ export type TradeDirection = 's2f' | 'f2s';
 export interface TradeDraft {
   type: TradeDirection;
   name: string;
+  quantity: number;
   buy: number;
   sell: number;
 }
 
 export interface TradeMetrics {
   feeRate: number;
+  totalBuy: number;
+  grossSell: number;
   netSell: number;
   efficiency: number;
 }
@@ -52,13 +55,18 @@ export const roundTo = (value: number, digits = 2) => {
 
 export const formatMoney = (value: number) => `$${roundTo(value).toFixed(2)}`;
 
-export const calculateTradeMetrics = ({ type, buy, sell }: Pick<TradeDraft, 'type' | 'buy' | 'sell'>): TradeMetrics => {
+export const calculateTradeMetrics = ({ type, quantity, buy, sell }: Pick<TradeDraft, 'type' | 'quantity' | 'buy' | 'sell'>): TradeMetrics => {
   const feeRate = FEES[type];
-  const netSell = roundTo(sell * (1 - feeRate));
-  const efficiency = buy > 0 ? roundTo(netSell / buy, 3) : 0;
+  const normalizedQuantity = quantity > 0 ? quantity : 0;
+  const totalBuy = roundTo(buy * normalizedQuantity);
+  const grossSell = roundTo(sell * normalizedQuantity);
+  const netSell = roundTo(grossSell * (1 - feeRate));
+  const efficiency = totalBuy > 0 ? roundTo(netSell / totalBuy, 3) : 0;
 
   return {
     feeRate,
+    totalBuy,
+    grossSell,
     netSell,
     efficiency,
   };
@@ -74,7 +82,7 @@ export const createTradeRecord = (draft: TradeDraft, existingId?: string): Trade
 export const calculatePortfolioSummary = (trades: TradeRecord[]): PortfolioSummary => {
   const totals = trades.reduce(
     (acc, trade) => {
-      acc.totalSpent += trade.buy;
+      acc.totalSpent += trade.totalBuy;
       acc.totalReturn += trade.netSell;
       return acc;
     },

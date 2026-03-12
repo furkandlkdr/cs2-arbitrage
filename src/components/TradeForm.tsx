@@ -18,7 +18,7 @@ export default function TradeForm({ draft, editing, onChange, onSubmit, onCancel
   };
 
   const setField = (field: keyof TradeDraft, value: string) => {
-    if (field === 'buy' || field === 'sell') {
+    if (field === 'quantity' || field === 'buy' || field === 'sell') {
       onChange({ ...draft, [field]: Number(value) || 0 });
       return;
     }
@@ -26,9 +26,9 @@ export default function TradeForm({ draft, editing, onChange, onSubmit, onCancel
     onChange({ ...draft, [field]: value });
   };
 
-  const note = draft.buy > 0 && draft.sell > 0
+  const note = draft.quantity > 0 && draft.buy > 0 && draft.sell > 0
     ? `${editing ? 'Güncellenirse' : 'Eklenirse'} bu işlem ${metrics.efficiency >= 1 ? 'kârlı görünüyor' : 'zarar riski taşıyor'}.`
-    : 'Alış ve satış fiyatlarını girdiğinizde net sonucu eklemeden önce görürsünüz.';
+    : 'Adet, alış ve satış fiyatlarını girdiğinizde net sonucu eklemeden önce görürsünüz.';
 
   return (
     <section className="rounded-[28px] border border-[var(--border-soft)] bg-[var(--surface)] p-5 shadow-[0_24px_80px_rgba(15,23,42,0.12)] backdrop-blur">
@@ -58,13 +58,26 @@ export default function TradeForm({ draft, editing, onChange, onSubmit, onCancel
             })}
           </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <div className="mt-5 grid gap-3 md:grid-cols-4">
             <label className="block">
               <span className="mb-2 block text-sm text-[var(--text-muted)]">Eşya Adı</span>
               <input
                 value={draft.name}
                 onChange={(event) => setField('name', event.target.value)}
                 placeholder="Örn: AK-47 Slate"
+                className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-elevated)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--sky-border)] focus:ring-4 focus:ring-[var(--sky-soft)]"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm text-[var(--text-muted)]">Adet</span>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={draft.quantity || ''}
+                onChange={(event) => setField('quantity', event.target.value)}
+                placeholder="1"
                 className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-elevated)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--sky-border)] focus:ring-4 focus:ring-[var(--sky-soft)]"
               />
             </label>
@@ -123,8 +136,16 @@ export default function TradeForm({ draft, editing, onChange, onSubmit, onCancel
               <p className="mt-2 font-mono text-sm font-semibold text-[var(--text-primary)]">{DIRECTION_META[draft.type].label}</p>
             </div>
             <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-3">
+              <p className="text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">Adet</p>
+              <p className="mt-2 font-mono text-sm font-semibold text-[var(--text-primary)]">{draft.quantity || 0}</p>
+            </div>
+            <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-3">
               <p className="text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">Komisyon</p>
               <p className="mt-2 font-mono text-sm font-semibold text-[var(--text-primary)]">%{(FEES[draft.type] * 100).toFixed(2)}</p>
+            </div>
+            <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-3">
+              <p className="text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">Toplam Alış</p>
+              <p className="mt-2 font-mono text-sm font-semibold text-[var(--text-primary)]">{formatMoney(metrics.totalBuy)}</p>
             </div>
             <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-3">
               <p className="text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">Net Satış</p>
@@ -138,7 +159,7 @@ export default function TradeForm({ draft, editing, onChange, onSubmit, onCancel
             </div>
           </div>
 
-          <div className="mt-4 border-t border-[var(--border-soft)] pt-4 text-sm text-[var(--text-secondary)]">{note} Net dönüş {formatMoney(metrics.netSell)} olur.</div>
+          <div className="mt-4 border-t border-[var(--border-soft)] pt-4 text-sm text-[var(--text-secondary)]">{note} {draft.quantity > 0 ? `${draft.quantity} adet için` : 'Bu işlemde'} net dönüş {formatMoney(metrics.netSell)} olur.</div>
         </aside>
       </div>
     </section>
