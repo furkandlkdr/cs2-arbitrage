@@ -1,19 +1,17 @@
 # Active Context
 
-## Şu An Ne Üzerinde Çalışıyoruz?
-Temel bileşenlerin (Calculator, TradeCard, Dashboard) oluşturulması ve Zustand ile state yönetiminin sağlanması tamamlandı. Supabase entegrasyonu için gerekli dosyalar oluşturuldu.
+## Su An Ne Uzerinde Calisiyoruz?
+Proje kapsamı sadeleştirildi. Hedef, eski `test.html` prototipindeki özellikleri Next.js uygulaması içinde aynı davranışla sunmak ve uygulamayı istemci tarafında çalışır halde tutmak.
 
-## Bir Sonraki Adım
-1. Supabase üzerinde `Users` ve `Trades` tablolarını oluşturmak.
-2. Dashboard'a Recharts ile grafikler ekleyerek finansal verileri görselleştirmek.
-3. Uygulamayı test edip GitHub Pages'e deploy etmek.
+## Bir Sonraki Adim
+1. GitHub Pages deployment adimlarinin uygulanmasi.
+2. Gerekirse custom domain baglantisinin yapilmasi.
+3. Daha sonra istenirse opsiyonel giris sistemi icin Supabase Auth veya benzeri bir katman eklenmesi.
 
-## Güncel Durum
-- Next.js projesi oluşturuldu.
-- Memory-Bank mimarisi kuruldu.
-- Bağımlılıklar yüklendi.
-- `calculations.ts` ile arbitraj formülleri eklendi.
-- Zustand store (`useTradeStore.ts`) oluşturuldu.
-- `Calculator`, `TradeCard` ve `Dashboard` bileşenleri yazıldı.
-- Supabase client ve `.env.local` yapılandırıldı.
-- GitHub Pages için `next.config.ts` ve `deploy` scripti eklendi.
+## Guncel Durum
+- Uygulama tek ekranli local arac yapisina cekildi.
+- Canli hesaplama, ekleme, duzenleme ve silme akisi calisiyor.
+- Mobil liste gorunumu ve opsiyonel local giris sistemi eklendi.
+- Acik, koyu ve sistem tema destegi eklendi.
+- Dark Reader ile hydration uyumsuzlugunu azaltmak icin tema scripti ve html suppressHydrationWarning eklendi.
+- Supabase ve daha buyuk SaaS kapsamı simdilik ertelendi.

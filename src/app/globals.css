@@ -1,36 +1,158 @@
 @import "tailwindcss";
 
 :root {
-  --background: #030712; /* gray-950 */
-  --foreground: #f3f4f6; /* gray-100 */
+  --background: #f4f8fc;
+  --foreground: #112031;
+  --page-gradient: radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent 28%), radial-gradient(circle at top right, rgba(251, 191, 36, 0.14), transparent 26%), linear-gradient(145deg, #f7fbff 0%, #e8f1f8 100%);
+  --surface: rgba(255, 255, 255, 0.74);
+  --surface-elevated: rgba(255, 255, 255, 0.84);
+  --surface-soft: rgba(15, 23, 42, 0.05);
+  --surface-muted: rgba(255, 255, 255, 0.55);
+  --border-soft: rgba(15, 23, 42, 0.1);
+  --text-primary: #112031;
+  --text-secondary: #26445e;
+  --text-muted: #5f748b;
+  --accent: #ca8a04;
+  --accent-soft: rgba(245, 158, 11, 0.16);
+  --accent-border: rgba(202, 138, 4, 0.28);
+  --accent-contrast: #2a1900;
+  --sky-soft: rgba(14, 165, 233, 0.12);
+  --sky-border: rgba(14, 165, 233, 0.2);
+  --sky-text: #0369a1;
+  --good: #15803d;
+  --bad: #c2410c;
+  --selection: rgba(125, 211, 252, 0.28);
+  --scrollbar-track: rgba(203, 213, 225, 0.6);
+  --scrollbar-thumb: rgba(100, 116, 139, 0.5);
+}
+
+html[data-theme='light'] {
+  --background: #f4f8fc;
+  --foreground: #112031;
+  --page-gradient: radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent 28%), radial-gradient(circle at top right, rgba(251, 191, 36, 0.14), transparent 26%), linear-gradient(145deg, #f7fbff 0%, #e8f1f8 100%);
+  --surface: rgba(255, 255, 255, 0.74);
+  --surface-elevated: rgba(255, 255, 255, 0.84);
+  --surface-soft: rgba(15, 23, 42, 0.05);
+  --surface-muted: rgba(255, 255, 255, 0.55);
+  --border-soft: rgba(15, 23, 42, 0.1);
+  --text-primary: #112031;
+  --text-secondary: #26445e;
+  --text-muted: #5f748b;
+  --accent: #ca8a04;
+  --accent-soft: rgba(245, 158, 11, 0.16);
+  --accent-border: rgba(202, 138, 4, 0.28);
+  --accent-contrast: #2a1900;
+  --sky-soft: rgba(14, 165, 233, 0.12);
+  --sky-border: rgba(14, 165, 233, 0.2);
+  --sky-text: #0369a1;
+  --good: #15803d;
+  --bad: #c2410c;
+  --selection: rgba(125, 211, 252, 0.28);
+  --scrollbar-track: rgba(203, 213, 225, 0.6);
+  --scrollbar-thumb: rgba(100, 116, 139, 0.5);
+  color-scheme: light;
+}
+
+html[data-theme='dark'] {
+  --background: #06101d;
+  --foreground: #f0f6ff;
+  --page-gradient: radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 30%), radial-gradient(circle at top right, rgba(251, 191, 36, 0.12), transparent 26%), linear-gradient(135deg, #06101d 0%, #10243b 100%);
+  --surface: rgba(2, 8, 23, 0.72);
+  --surface-elevated: rgba(2, 8, 23, 0.8);
+  --surface-soft: rgba(255, 255, 255, 0.04);
+  --surface-muted: rgba(15, 23, 42, 0.58);
+  --border-soft: rgba(255, 255, 255, 0.1);
+  --text-primary: #f0f6ff;
+  --text-secondary: #d0ddec;
+  --text-muted: #94a9c0;
+  --accent: #f59e0b;
+  --accent-soft: rgba(245, 158, 11, 0.16);
+  --accent-border: rgba(245, 158, 11, 0.28);
+  --accent-contrast: #1b1402;
+  --sky-soft: rgba(56, 189, 248, 0.12);
+  --sky-border: rgba(125, 211, 252, 0.18);
+  --sky-text: #7dd3fc;
+  --good: #86efac;
+  --bad: #fda4af;
+  --selection: rgba(125, 211, 252, 0.24);
+  --scrollbar-track: rgba(8, 15, 30, 0.9);
+  --scrollbar-thumb: rgba(148, 163, 184, 0.35);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --background: #06101d;
+    --foreground: #f0f6ff;
+    --page-gradient: radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 30%), radial-gradient(circle at top right, rgba(251, 191, 36, 0.12), transparent 26%), linear-gradient(135deg, #06101d 0%, #10243b 100%);
+    --surface: rgba(2, 8, 23, 0.72);
+    --surface-elevated: rgba(2, 8, 23, 0.8);
+    --surface-soft: rgba(255, 255, 255, 0.04);
+    --surface-muted: rgba(15, 23, 42, 0.58);
+    --border-soft: rgba(255, 255, 255, 0.1);
+    --text-primary: #f0f6ff;
+    --text-secondary: #d0ddec;
+    --text-muted: #94a9c0;
+    --accent: #f59e0b;
+    --accent-soft: rgba(245, 158, 11, 0.16);
+    --accent-border: rgba(245, 158, 11, 0.28);
+    --accent-contrast: #1b1402;
+    --sky-soft: rgba(56, 189, 248, 0.12);
+    --sky-border: rgba(125, 211, 252, 0.18);
+    --sky-text: #7dd3fc;
+    --good: #86efac;
+    --bad: #fda4af;
+    --selection: rgba(125, 211, 252, 0.24);
+    --scrollbar-track: rgba(8, 15, 30, 0.9);
+    --scrollbar-thumb: rgba(148, 163, 184, 0.35);
+  }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --font-sans: var(--font-space-grotesk);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light dark;
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  background: var(--page-gradient);
+  color: var(--text-primary);
+  font-family: var(--font-space-grotesk), sans-serif;
+  transition: background-color 180ms ease, color 180ms ease, background-image 180ms ease;
 }
 
-/* Custom Scrollbar for Dashboard */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: #111827; /* gray-900 */
-  border-radius: 4px;
+::selection {
+  background: var(--selection);
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #374151; /* gray-700 */
-  border-radius: 4px;
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #4b5563; /* gray-600 */
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+  border: 2px solid var(--scrollbar-track);
 }

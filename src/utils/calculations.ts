@@ -1,117 +1,89 @@
-export interface PlatformFee {
-  percentage: number; // e.g., 15 for Steam, 2 for CS Float
-  fixed?: number; // e.g., 0.00 for some platforms
+export type TradeDirection = 's2f' | 'f2s';
+
+export interface TradeDraft {
+  type: TradeDirection;
+  name: string;
+  buy: number;
+  sell: number;
 }
 
-export interface ArbitrageStep {
-  buyPrice: number;
-  sellPrice: number;
-  quantity: number;
-  sellPlatformFee: PlatformFee;
+export interface TradeMetrics {
+  feeRate: number;
+  netSell: number;
+  efficiency: number;
 }
 
-export interface ArbitrageResult {
-  totalInvestment: number;
-  grossRevenue: number;
-  netRevenue: number;
-  netProfit: number;
-  roiPercentage: number;
-  dustBalance: number;
+export interface TradeRecord extends TradeDraft, TradeMetrics {
+  id: string;
+  createdAt: string;
 }
 
-/**
- * Yuvarlama hatalarını önlemek için hassas yuvarlama fonksiyonu (2 ondalık basamak)
- */
-export const roundToTwo = (num: number): number => {
-  return Math.round((num + Number.EPSILON) * 100) / 100;
+export interface PortfolioSummary {
+  totalSpent: number;
+  totalReturn: number;
+  avgEfficiency: number;
+}
+
+export const FEES: Record<TradeDirection, number> = {
+  s2f: 0.02,
+  f2s: 0.1393,
 };
 
-/**
- * Tek bir arbitraj adımının (Platform A -> B) hesaplamasını yapar.
- */
-export const calculateStep = (
-  buyPrice: number,
-  sellPrice: number,
-  quantity: number,
-  sellPlatformFee: PlatformFee
-): ArbitrageResult => {
-  const totalInvestment = roundToTwo(buyPrice * quantity);
-  const grossRevenue = roundToTwo(sellPrice * quantity);
-  
-  const feePercentageAmount = grossRevenue * (sellPlatformFee.percentage / 100);
-  const feeFixedAmount = (sellPlatformFee.fixed || 0) * quantity;
-  const totalFee = roundToTwo(feePercentageAmount + feeFixedAmount);
-  
-  const netRevenue = roundToTwo(grossRevenue - totalFee);
-  const netProfit = roundToTwo(netRevenue - totalInvestment);
-  
-  const roiPercentage = totalInvestment > 0 ? roundToTwo((netProfit / totalInvestment) * 100) : 0;
+export const DIRECTION_META: Record<
+  TradeDirection,
+  { label: string; feeLabel: string; shortLabel: string }
+> = {
+  s2f: {
+    label: 'Steam -> CSFloat',
+    feeLabel: '%2 komisyon',
+    shortLabel: 'S -> F',
+  },
+  f2s: {
+    label: 'CSFloat -> Steam',
+    feeLabel: '%13.93 komisyon',
+    shortLabel: 'F -> S',
+  },
+};
+
+export const roundTo = (value: number, digits = 2) => {
+  const factor = 10 ** digits;
+  return Math.round((value + Number.EPSILON) * factor) / factor;
+};
+
+export const formatMoney = (value: number) => `$${roundTo(value).toFixed(2)}`;
+
+export const calculateTradeMetrics = ({ type, buy, sell }: Pick<TradeDraft, 'type' | 'buy' | 'sell'>): TradeMetrics => {
+  const feeRate = FEES[type];
+  const netSell = roundTo(sell * (1 - feeRate));
+  const efficiency = buy > 0 ? roundTo(netSell / buy, 3) : 0;
 
   return {
-    totalInvestment,
-    grossRevenue,
-    netRevenue,
-    netProfit,
-    roiPercentage,
-    dustBalance: 0, // Bu adımda kullanılmıyor, kümülatif hesaplamada kullanılacak
+    feeRate,
+    netSell,
+    efficiency,
   };
 };
 
-/**
- * Çift aşamalı arbitrajın (Platform A -> B -> A) kümülatif hesaplamasını yapar.
- * @param initialBalance Başlangıç bakiyesi
- * @param step1 Birinci aşama verileri
- * @param step2 İkinci aşama verileri
- */
-export const calculateDualStepArbitrage = (
-  initialBalance: number,
-  step1: ArbitrageStep,
-  step2: ArbitrageStep
-) => {
-  // 1. Aşama Hesaplaması
-  const step1Result = calculateStep(
-    step1.buyPrice,
-    step1.sellPrice,
-    step1.quantity,
-    step1.sellPlatformFee
+export const createTradeRecord = (draft: TradeDraft, existingId?: string): TradeRecord => ({
+  ...draft,
+  ...calculateTradeMetrics(draft),
+  id: existingId ?? crypto.randomUUID(),
+  createdAt: new Date().toISOString(),
+});
+
+export const calculatePortfolioSummary = (trades: TradeRecord[]): PortfolioSummary => {
+  const totals = trades.reduce(
+    (acc, trade) => {
+      acc.totalSpent += trade.buy;
+      acc.totalReturn += trade.netSell;
+      return acc;
+    },
+    { totalSpent: 0, totalReturn: 0 }
   );
-
-  // 1. Aşama sonrası artan bakiye (Dust Balance)
-  const step1DustBalance = roundToTwo(initialBalance - step1Result.totalInvestment);
-
-  // 2. Aşama için kullanılabilir bakiye (1. aşamadan elde edilen net gelir + artan bakiye)
-  const availableBalanceForStep2 = roundToTwo(step1Result.netRevenue + step1DustBalance);
-
-  // 2. Aşama Hesaplaması
-  const step2Result = calculateStep(
-    step2.buyPrice,
-    step2.sellPrice,
-    step2.quantity,
-    step2.sellPlatformFee
-  );
-
-  // 2. Aşama sonrası artan bakiye (Dust Balance)
-  const finalDustBalance = roundToTwo(availableBalanceForStep2 - step2Result.totalInvestment);
-
-  // Kümülatif Sonuçlar
-  const cumulativeNetRevenue = roundToTwo(step2Result.netRevenue + finalDustBalance);
-  const cumulativeNetProfit = roundToTwo(cumulativeNetRevenue - initialBalance);
-  const cumulativeRoiPercentage = initialBalance > 0 ? roundToTwo((cumulativeNetProfit / initialBalance) * 100) : 0;
 
   return {
-    step1: {
-      ...step1Result,
-      dustBalance: step1DustBalance,
-    },
-    step2: {
-      ...step2Result,
-      dustBalance: finalDustBalance,
-    },
-    cumulative: {
-      initialBalance,
-      finalBalance: cumulativeNetRevenue,
-      netProfit: cumulativeNetProfit,
-      roiPercentage: cumulativeRoiPercentage,
-    },
+    totalSpent: roundTo(totals.totalSpent),
+    totalReturn: roundTo(totals.totalReturn),
+    avgEfficiency: totals.totalSpent > 0 ? roundTo(totals.totalReturn / totals.totalSpent, 3) : 0,
   };
 };

@@ -1,38 +1,25 @@
 import { create } from 'zustand';
-
-export interface Trade {
-  id: string;
-  item_name: string;
-  buy_price: number;
-  sell_price: number;
-  quantity: number;
-  status: 'pending' | 'completed';
-  platform_a: string;
-  platform_b: string;
-  created_at: string;
-  trade_lock_end?: string; // 7 günlük takas banı bitiş tarihi
-}
+import { TradeRecord } from '@/utils/calculations';
 
 interface TradeState {
-  trades: Trade[];
-  totalBalance: number;
-  setTotalBalance: (balance: number) => void;
-  addTrade: (trade: Trade) => void;
-  updateTradeStatus: (id: string, status: 'pending' | 'completed') => void;
+  trades: TradeRecord[];
+  hydrated: boolean;
+  setTrades: (trades: TradeRecord[]) => void;
+  addTrade: (trade: TradeRecord) => void;
+  updateTrade: (trade: TradeRecord) => void;
   removeTrade: (id: string) => void;
-  setTrades: (trades: Trade[]) => void;
+  setHydrated: (hydrated: boolean) => void;
 }
 
 export const useTradeStore = create<TradeState>((set) => ({
   trades: [],
-  totalBalance: 0,
-  setTotalBalance: (balance) => set({ totalBalance: balance }),
-  addTrade: (trade) => set((state) => ({ trades: [...state.trades, trade] })),
-  updateTradeStatus: (id, status) =>
-    set((state) => ({
-      trades: state.trades.map((t) => (t.id === id ? { ...t, status } : t)),
-    })),
-  removeTrade: (id) =>
-    set((state) => ({ trades: state.trades.filter((t) => t.id !== id) })),
+  hydrated: false,
   setTrades: (trades) => set({ trades }),
+  addTrade: (trade) => set((state) => ({ trades: [...state.trades, trade] })),
+  updateTrade: (trade) =>
+    set((state) => ({
+      trades: state.trades.map((current) => (current.id === trade.id ? trade : current)),
+    })),
+  removeTrade: (id) => set((state) => ({ trades: state.trades.filter((trade) => trade.id !== id) })),
+  setHydrated: (hydrated) => set({ hydrated }),
 }));

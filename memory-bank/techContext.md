@@ -1,15 +1,18 @@
 # Tech Context
 
-## Kullanılan Teknolojiler
-- **Frontend:** Next.js (App Router), React, TypeScript
-- **Styling:** Tailwind CSS, Shadcn/UI (Lucide Icons, Radix UI)
-- **State Management:** Zustand (Hafif ve hızlı olduğu için tercih edildi)
-- **Backend/Database:** Supabase (PostgreSQL) - Client-side SDK üzerinden yönetilecek.
-- **Charts:** Recharts (Finansal verilerin görselleştirilmesi için)
-- **Hosting:** GitHub Pages (Serverless, Static Export)
+## Kullanilan Teknolojiler
+- Frontend: Next.js (App Router), React, TypeScript
+- Styling: Tailwind CSS v4 ve global CSS
+- State Management: Zustand
+- Veri Saklama: Tarayici localStorage
+- Deployment: GitHub Pages workflow + static export
 
 ## Teknik Kararlar
-1. **Serverless Mimari:** Proje GitHub Pages üzerinde hostlanacağı için Next.js `output: 'export'` ayarı ile statik olarak derlenecek. Bu nedenle Prisma veya özel bir Node.js backend'i kullanılmayacak. Tüm veritabanı işlemleri Supabase Client-side SDK üzerinden yönetilecek.
-2. **State Management:** React Context API yerine Zustand tercih edildi, çünkü daha az boilerplate kod gerektiriyor ve performans açısından daha verimli.
-3. **Hesaplamalar:** `calculations.ts` adında bir utility dosyası oluşturularak matematiksel formüller (Net Satış Geliri, ROI, Kümülatif Bakiye) merkezi bir yerde toplanacak. Yuvarlama hatalarını önlemek için bakiye hesaplamalarında hassas davranılacak.
-4. **UI/UX:** Dark mode odaklı, finansal verilerin ön planda olduğu bir Dashboard tasarlanacak. ROI yüzdesi pozitifse yeşil, negatifse kırmızı vurgulanacak. Mobil uyumlu (Responsive) tablo yapısı kullanılacak.
+1. Proje simdilik local-first calisir; zorunlu backend yoktur.
+2. Hesaplamalar `src/utils/calculations.ts` icinde merkezi olarak tutulur.
+3. UI tek sayfalik bir akis olarak tasarlanir; `test.html` ile davranis esitligi hedeflenir.
+4. Durum yonetiminde Zustand kullanilir, kalicilik ise component tarafindan localStorage ile saglanir.
+5. Login sistemi opsiyonel local mod olarak hazir tutulur; varsayilan durumda kapalidir.
+6. Tema secimi localStorage icinde saklanir; varsayilan mod sistem temasidir.
+7. GitHub Pages icin Next.js `output: 'export'` kullanilir; statik cikti klasoru `out/` olur.
+8. Deployment workflow dosyasi `.github/workflows/deploy.yml` altinda tutulur ve artifact olarak `out/` klasorunu yukler.
