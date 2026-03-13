@@ -1,6 +1,6 @@
 'use client';
 
-import { DIRECTION_META, FEES, TradeDirection, TradeDraft, calculateTradeMetrics, formatMoney } from '@/utils/calculations';
+import { DIRECTION_META, TradeDirection, TradeDraft, calculateTradeMetrics, formatMoney } from '@/utils/calculations';
 
 interface TradeFormProps {
   draft: TradeDraft;
@@ -141,7 +141,7 @@ export default function TradeForm({ draft, editing, onChange, onSubmit, onCancel
             </div>
             <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-3">
               <p className="text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">Komisyon</p>
-              <p className="mt-2 font-mono text-sm font-semibold text-[var(--text-primary)]">%{(FEES[draft.type] * 100).toFixed(2)}</p>
+              <p className="mt-2 font-mono text-sm font-semibold text-[var(--text-primary)]">%{(metrics.feeRate * 100).toFixed(2)}</p>
             </div>
             <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-soft)] p-3">
               <p className="text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">Toplam Alış</p>

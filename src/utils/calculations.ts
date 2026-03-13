@@ -29,7 +29,7 @@ export interface PortfolioSummary {
 
 export const FEES: Record<TradeDirection, number> = {
   s2f: 0.02,
-  f2s: 0.1393,
+  f2s: 0.15, // Steam (%5) + CS2 oyun (%10) — S üzerinden hesaplanır, B'den değil
 };
 
 export const DIRECTION_META: Record<
@@ -43,9 +43,40 @@ export const DIRECTION_META: Record<
   },
   f2s: {
     label: 'CSFloat -> Steam',
-    feeLabel: '%13.93 komisyon',
+    feeLabel: '%5+%10 Steam komisyonu',
     shortLabel: 'F -> S',
   },
+};
+
+/**
+ * Steam Pazarı: Alıcının ödediği fiyattan (B) satıcının eline geçen tutarı (S) hesaplar.
+ * B = S + floor(S × 0.05) + floor(S × 0.10), her ikisi de min $0.01
+ * Tersine mühendislik ile doğru S değerini iteratif olarak bulur.
+ */
+export const steamNetFromGross = (gross: number): number => {
+  const buyerCents = Math.round(gross * 100);
+  if (buyerCents <= 0) return 0;
+
+  const computeBuyer = (s: number): number => {
+    const sf = Math.max(1, Math.floor(s * 0.05));
+    const gf = Math.max(1, Math.floor(s * 0.10));
+    return s + sf + gf;
+  };
+
+  // İlk tahmin: floor B/1.15 (minimum ücret efektlerinden dolayı biraz düşük/yüksek olabilir)
+  let s = Math.max(1, Math.floor(buyerCents / 1.15));
+
+  // Aşıldıysa aşağı ayarla
+  while (s > 0 && computeBuyer(s) > buyerCents) {
+    s--;
+  }
+
+  // Sığdığı sürece yukarı ayarla (en yüksek geçerli S'yi bul)
+  while (computeBuyer(s + 1) <= buyerCents) {
+    s++;
+  }
+
+  return s / 100;
 };
 
 export const roundTo = (value: number, digits = 2) => {
@@ -76,11 +107,17 @@ const createTradeId = () => {
 };
 
 export const calculateTradeMetrics = ({ type, quantity, buy, sell }: Pick<TradeDraft, 'type' | 'quantity' | 'buy' | 'sell'>): TradeMetrics => {
-  const feeRate = FEES[type];
   const normalizedQuantity = quantity > 0 ? quantity : 0;
   const totalBuy = roundTo(buy * normalizedQuantity);
   const grossSell = roundTo(sell * normalizedQuantity);
-  const netSell = roundTo(grossSell * (1 - feeRate));
+
+  // f2s: Steam komisyonu her eşya için ayrı ayrı hesaplanır (kuruş yuvarlama nedeniyle)
+  const netSell = type === 'f2s'
+    ? roundTo(steamNetFromGross(sell) * normalizedQuantity)
+    : roundTo(grossSell * (1 - FEES[type]));
+
+  // Efektif komisyon oranı (f2s için fiyata bağlı olarak hafifçe değişir ~%13.04)
+  const feeRate = grossSell > 0 ? roundTo((grossSell - netSell) / grossSell, 4) : FEES[type];
   const efficiency = totalBuy > 0 ? roundTo(netSell / totalBuy, 3) : 0;
 
   return {
