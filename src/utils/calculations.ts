@@ -99,6 +99,25 @@ export const createTradeRecord = (draft: TradeDraft, existingId?: string): Trade
   createdAt: new Date().toISOString(),
 });
 
+export const calculateSteamSellerReceive = (buyerPays: number): number => {
+  const buyerPaysCents = Math.round(buyerPays * 100);
+  let result = 0;
+
+  for (let sCents = 1; sCents < buyerPaysCents; sCents++) {
+    const steamFee = Math.max(1, Math.floor(sCents * 0.05));
+    const cs2Fee = Math.max(1, Math.floor(sCents * 0.10));
+    const total = sCents + steamFee + cs2Fee;
+
+    if (total === buyerPaysCents) {
+      result = sCents;
+    } else if (total > buyerPaysCents) {
+      break;
+    }
+  }
+
+  return result / 100;
+};
+
 export const calculatePortfolioSummary = (trades: TradeRecord[]): PortfolioSummary => {
   const totals = trades.reduce(
     (acc, trade) => {
