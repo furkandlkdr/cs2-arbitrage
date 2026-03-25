@@ -14,8 +14,13 @@
 - [x] Uretim build dogrulamasi basarili gecti.
 - [x] Gereksiz npm paketleri kaldirildi ve package manifest sadeleştirildi.
 - [x] GitHub Pages icin workflow dosyasi eklendi.
+- [x] Firebase Auth (Email/Password + Google) entegrasyonu tamamlandi.
+- [x] Firestore tabanli kullaniciya ozel trade senkronizasyonu tamamlandi.
+- [x] Login/Register sayfalari modern UI ile guncellendi.
+- [x] Profil adi tamamlama akisi eklendi.
+- [x] GitHub Pages workflow push tetikleyicisi `master/main` olarak duzeltildi.
 
 ## Siradaki Hedefler
-- [ ] GitHub repository ayarlarinda Pages kaynaginin Actions olarak secilmesi.
+- [ ] Repository secrets degerlerinin eksiksiz girildigini dogrulamak.
+- [ ] Ilk otomatik deploy run'ini takip edip publish URL kontrolu yapmak.
 - [ ] Gerekirse custom domain baglantisinin yapilmasi.
-- [ ] Opsiyonel login ve bulut veri senkronizasyonu icin sonraki fazin planlanmasi.
