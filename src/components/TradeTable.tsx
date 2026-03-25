@@ -4,11 +4,12 @@ import { DIRECTION_META, TradeRecord, formatMoney } from '@/utils/calculations';
 
 interface TradeTableProps {
   trades: TradeRecord[];
+  deletingId: string | null;
   onEdit: (trade: TradeRecord) => void;
   onDelete: (id: string) => void;
 }
 
-export default function TradeTable({ trades, onEdit, onDelete }: TradeTableProps) {
+export default function TradeTable({ trades, deletingId, onEdit, onDelete }: TradeTableProps) {
   if (trades.length === 0) {
     return (
       <section className="rounded-[28px] border border-dashed border-[var(--border-soft)] bg-[var(--surface)] p-8 text-center text-[var(--text-muted)] backdrop-blur">
@@ -61,9 +62,10 @@ export default function TradeTable({ trades, onEdit, onDelete }: TradeTableProps
                 <button
                   type="button"
                   onClick={() => onDelete(trade.id)}
+                  disabled={deletingId === trade.id}
                   className="flex-1 rounded-xl border border-[color:color-mix(in_srgb,var(--bad)_25%,transparent)] bg-[color:color-mix(in_srgb,var(--bad)_12%,transparent)] px-3 py-2 text-sm font-medium text-[var(--bad)] transition hover:opacity-90"
                 >
-                  Sil
+                  {deletingId === trade.id ? 'Siliniyor...' : 'Sil'}
                 </button>
               </div>
             </article>
@@ -113,9 +115,10 @@ export default function TradeTable({ trades, onEdit, onDelete }: TradeTableProps
                       <button
                         type="button"
                         onClick={() => onDelete(trade.id)}
+                        disabled={deletingId === trade.id}
                         className="rounded-xl border border-[color:color-mix(in_srgb,var(--bad)_25%,transparent)] bg-[color:color-mix(in_srgb,var(--bad)_12%,transparent)] px-3 py-2 text-sm font-medium text-[var(--bad)] transition hover:opacity-90"
                       >
-                        Sil
+                        {deletingId === trade.id ? 'Siliniyor...' : 'Sil'}
                       </button>
                     </div>
                   </td>

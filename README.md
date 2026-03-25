@@ -5,66 +5,63 @@
 </p>
 
 <p align="center">
-	Steam ve CSFloat işlemlerini hızlıca hesaplamak, kaydetmek ve takip etmek için sade arayüz.
+	Steam ve CSFloat işlemlerini hesaplamak, kaydetmek ve Firebase ile tum cihazlarda senkron takip etmek icin modern arayuz.
 </p>
 
-Bu proje şu anda tek ekranlı, tarayıcıda çalışan bir arbitraj takip aracı olarak sadeleştirildi. Amaç, eski prototipteki davranışı Next.js uygulaması içinde sürdürmek:
+## Ozellikler
 
-- Steam -> CSFloat ve CSFloat -> Steam islemleri
-- Anlık net satış ve verim hesabı
-- İşlem ekleme, düzenleme ve silme
-- Kayıtları tarayıcı `localStorage` içinde saklama
-- Opsiyonel yerel giriş sistemi altyapısı
-- Açık, koyu ve sistem teması desteği
-
-## Mevcut Durum
-
-Uygulama sunucuya veri göndermeden çalışır. Sunucu tarafı veritabanı ve bulut senkronizasyonu aktif değildir. Giriş sistemi varsayılan olarak kapalıdır.
-
-## Sonra Eklenecekler
-
-- Opsiyonel kullanıcı girişi
-- Supabase ile bulut veri saklama
-- Çoklu cihaz senkronizasyonu
+- Firebase Authentication ile e-posta/sifre giris ve kayit
+- Firestore ile kullanici bazli veri saklama
+- Cihazlar arasi senkron islem listesi
+- Steam -> CSFloat ve CSFloat -> Steam hesaplama akislari
+- Islem ekleme, duzenleme, silme
+- Acik, koyu ve sistem temasi
 
 ## Kurulum
 
-1. Bağımlılıkları yükleyin:
+1. Bagimliliklari yukleyin:
 
 ```bash
 npm install
 ```
 
-2. Geliştirme sunucusunu başlatın:
+2. Proje kokune `.env.local` dosyasi olusturun ve Firebase bilgilerinizi ekleyin:
+
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-N3SFG0BFJ5
+```
+
+3. Gelistirme sunucusunu baslatin:
 
 ```bash
 npm run dev
 ```
 
-3. Tarayıcıda `http://localhost:3000` adresini açın.
+4. Tarayicida `http://localhost:3000` adresini acin.
 
-## Opsiyonel Yerel Giriş
+## Guvenlik Notlari
 
-Varsayılan durumda uygulama giriş istemez. İsterseniz `.env.local` içine şu satırı ekleyerek yerel oturum modunu açabilirsiniz:
-
-```env
-NEXT_PUBLIC_ENABLE_LOCAL_AUTH=true
-```
-
-Bu mod sadece aynı tarayıcıda basit bir kullanıcı adı tutar. Daha sonra Supabase Auth gibi gerçek bir sisteme bağlanmak için iskelet olarak hazırlandı.
-
-## Tema
-
-Uygulama varsayılan olarak cihazın tema tercihini izler. İsteyen kullanıcı arayüzdeki tema anahtarından açık, koyu veya sistem modunu seçebilir.
+- Kimlik dogrulama Firebase tarafinda yapilir, sifreler proje tarafinda saklanmaz.
+- Trade verileri sadece giris yapan kullanicinin uid altinda tutulur.
+- Hata mesajlari istemci tarafinda normalize edilerek gereksiz bilgi sizmasi azaltilmistir.
+- Uretimde Firebase App Check, e-posta dogrulama ve brute-force korumalari da aktif edilmelidir.
 
 ## Mimari
 
-- `src/components/Dashboard.tsx`: Sayfanın ana akışı
-- `src/components/TradeForm.tsx`: Canlı hesaplama ve ekleme/düzenleme formu
-- `src/components/TradeSummary.tsx`: Özet kartları
-- `src/components/TradeTable.tsx`: Kayıt listesi ve aksiyonlar
-- `src/components/AuthPanel.tsx`: Opsiyonel yerel giriş paneli
-- `src/components/ThemeToggle.tsx`: Tema anahtarı
-- `src/store/useTradeStore.ts`: Yerel durum yönetimi
-- `src/store/useAuthStore.ts`: Opsiyonel yerel oturum durumu
-- `src/utils/calculations.ts`: Komisyon, net satış ve oran hesapları
+- `src/app/login/page.tsx`: Giris sayfasi
+- `src/app/register/page.tsx`: Kayit sayfasi
+- `src/components/AuthShell.tsx`: Login/Register ortak modern layout
+- `src/components/AuthPanel.tsx`: Oturum bilgisi ve cikis paneli
+- `src/components/Dashboard.tsx`: Ana panel, Firestore senkronu
+- `src/lib/firebase/client.ts`: Firebase app/auth/firestore baglantisi
+- `src/lib/firebase/auth.ts`: Auth servis fonksiyonlari
+- `src/lib/firebase/trades.ts`: Firestore trade CRUD ve subscription
+- `src/store/useAuthStore.ts`: Auth state
+- `src/store/useTradeStore.ts`: Trade state
+- `src/utils/calculations.ts`: Komisyon, net satis ve oran hesaplari

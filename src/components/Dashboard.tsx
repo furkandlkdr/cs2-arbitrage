@@ -1,6 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { FIREBASE_READY } from '@/lib/appConfig';
+import { subscribeToTrades, upsertTrade, deleteTrade } from '@/lib/firebase/trades';
+import { getUserProfile, upsertUserProfile } from '@/lib/firebase/profile';
+import { useAuthSync } from '@/hooks/useAuthSync';
 import TradeForm from './TradeForm';
 import TradeSummary from './TradeSummary';
 import TradeTable from './TradeTable';
@@ -9,9 +13,6 @@ import ThemeToggle from './ThemeToggle';
 import { useTradeStore } from '@/store/useTradeStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { TradeDraft, TradeRecord, calculatePortfolioSummary, createTradeRecord } from '@/utils/calculations';
-import { AUTH_ENABLED } from '@/lib/appConfig';
-
-const STORAGE_KEY = 'cs-arbitraj-local';
 
 const defaultDraft: TradeDraft = {
   type: 's2f',
@@ -22,70 +23,115 @@ const defaultDraft: TradeDraft = {
 };
 
 export default function Dashboard() {
+  useAuthSync();
+
   const { trades, hydrated, setTrades, addTrade, updateTrade, removeTrade, setHydrated } = useTradeStore();
-  const { hydrated: authHydrated, userName, setUserName, setHydrated: setAuthHydrated } = useAuthStore();
+  const { initialized: authInitialized, user, profileName, setProfileName } = useAuthStore();
   const [draft, setDraft] = useState<TradeDraft>(defaultDraft);
   const [editingTradeId, setEditingTradeId] = useState<string | null>(null);
+  const [profileDraft, setProfileDraft] = useState('');
+  const [profileBusy, setProfileBusy] = useState(false);
+  const [submitBusy, setSubmitBusy] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [deleteBusyId, setDeleteBusyId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!AUTH_ENABLED) {
-      setAuthHydrated(true);
+    let cancelled = false;
+
+    if (!user) {
+      setProfileName(null);
+      setProfileDraft('');
       return;
     }
 
-    try {
-      const savedUser = window.localStorage.getItem('cs-arbitraj-user');
-      if (savedUser) {
-        setUserName(savedUser);
+    const suggestedName = user.googleDisplayName?.trim()
+      || user.email?.split('@')[0]?.trim()
+      || '';
+
+    const hydrateProfile = async () => {
+      try {
+        const profile = await getUserProfile(user.uid);
+
+        if (cancelled) {
+          return;
+        }
+
+        if (profile?.displayName) {
+          setProfileName(profile.displayName);
+          setProfileDraft(profile.displayName);
+          return;
+        }
+
+        setProfileName(null);
+        setProfileDraft(suggestedName);
+      } catch {
+        if (!cancelled) {
+          setProfileName(null);
+          setProfileDraft(suggestedName);
+        }
       }
-    } finally {
-      setAuthHydrated(true);
-    }
-  }, [setAuthHydrated, setUserName]);
+    };
+
+    void hydrateProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [setProfileName, user]);
 
   useEffect(() => {
-    if (!AUTH_ENABLED || !authHydrated) {
-      return;
-    }
-
-    if (userName) {
-      window.localStorage.setItem('cs-arbitraj-user', userName);
-      return;
-    }
-
-    window.localStorage.removeItem('cs-arbitraj-user');
-  }, [authHydrated, userName]);
-
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as TradeRecord[];
-        setTrades(parsed);
-      }
-    } catch {
-      setTrades([]);
-    } finally {
+    if (!FIREBASE_READY) {
       setHydrated(true);
-    }
-  }, [setHydrated, setTrades]);
-
-  useEffect(() => {
-    if (!hydrated) {
       return;
     }
 
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));
-  }, [hydrated, trades]);
+    if (!authInitialized) {
+      return;
+    }
+
+    if (!user) {
+      setTrades([]);
+      setHydrated(true);
+      setSyncError(null);
+      return;
+    }
+
+    setHydrated(false);
+    setSyncError(null);
+
+    const unsubscribe = subscribeToTrades(
+      user.uid,
+      (nextTrades) => {
+        setTrades(nextTrades);
+        setHydrated(true);
+      },
+      () => {
+        setSyncError('Veriler yüklenirken bir hata oluştu. Sayfayı yenileyip tekrar deneyin.');
+        setHydrated(true);
+      }
+    );
+
+    return unsubscribe;
+  }, [authInitialized, setHydrated, setTrades, user]);
 
   const resetForm = () => {
     setDraft(defaultDraft);
     setEditingTradeId(null);
   };
 
-  const submitTrade = () => {
+  const submitTrade = async () => {
     if (!draft.quantity || !draft.buy || !draft.sell) {
       window.alert('Lütfen adet ve fiyatları girin.');
+      return;
+    }
+
+    if (!user) {
+      window.alert('İşlem kaydetmek için önce giriş yapmalısınız.');
+      return;
+    }
+
+    if (!profileName) {
+      window.alert('Lütfen önce profil adınızı tamamlayın.');
       return;
     }
 
@@ -94,13 +140,61 @@ export default function Dashboard() {
       name: draft.name.trim() || 'Eşya',
     };
 
-    if (editingTradeId) {
-      updateTrade(createTradeRecord(normalizedDraft, editingTradeId));
-    } else {
-      addTrade(createTradeRecord(normalizedDraft));
+    const existingTrade = editingTradeId ? trades.find((trade) => trade.id === editingTradeId) : undefined;
+    const createdTrade = createTradeRecord(normalizedDraft, editingTradeId || undefined);
+    const tradeToSave = existingTrade
+      ? {
+          ...createdTrade,
+          createdAt: existingTrade.createdAt,
+        }
+      : createdTrade;
+
+    setSubmitBusy(true);
+    setSyncError(null);
+
+    try {
+      if (editingTradeId) {
+        updateTrade(tradeToSave);
+      } else {
+        addTrade(tradeToSave);
+      }
+
+      await upsertTrade(user.uid, tradeToSave);
+      resetForm();
+    } catch {
+      setSyncError('İşlem kaydedilirken bir hata oluştu. Tekrar deneyin.');
+    } finally {
+      setSubmitBusy(false);
+    }
+  };
+
+  const saveProfileName = async () => {
+    if (!user) {
+      return;
     }
 
-    resetForm();
+    const normalized = profileDraft.trim();
+
+    if (normalized.length < 2) {
+      setSyncError('Profil adı en az 2 karakter olmalıdır.');
+      return;
+    }
+
+    setProfileBusy(true);
+    setSyncError(null);
+
+    try {
+      await upsertUserProfile(user.uid, {
+        displayName: normalized,
+        email: user.email,
+      });
+      setProfileName(normalized);
+      setProfileDraft(normalized);
+    } catch {
+      setSyncError('Profil adı kaydedilirken bir hata oluştu. Tekrar deneyin.');
+    } finally {
+      setProfileBusy(false);
+    }
   };
 
   const handleEdit = (trade: TradeRecord) => {
@@ -116,7 +210,8 @@ export default function Dashboard() {
   };
 
   const summary = calculatePortfolioSummary(trades);
-  const appLocked = AUTH_ENABLED && authHydrated && !userName;
+  const profileMissing = Boolean(user && !profileName);
+  const appLocked = !FIREBASE_READY || !authInitialized || !user || profileMissing;
 
   return (
     <main className="min-h-screen px-4 py-8 text-[var(--text-primary)] md:px-6 lg:px-8">
@@ -125,7 +220,7 @@ export default function Dashboard() {
           <div>
             <h1 className="text-4xl font-bold tracking-tight text-[var(--text-primary)]">CS Arbitrage Tracker</h1>
             <p className="mt-3 max-w-2xl text-sm text-[var(--text-secondary)]">
-              Steam ve CSFloat işlemlerini hesaplayın, kaydedin, düzenleyin ve tarayıcınızda saklayın.
+              Steam ve CSFloat işlemlerini hesaplayın, kaydedin, düzenleyin ve Firebase ile tüm cihazlarda senkron takip edin.
             </p>
           </div>
 
@@ -137,6 +232,37 @@ export default function Dashboard() {
         <div className="space-y-5">
           <AuthPanel />
 
+          {user && !profileName ? (
+            <section className="rounded-[24px] border border-[var(--accent-border)] bg-[var(--accent-soft)] p-5 text-sm text-[var(--text-primary)] backdrop-blur">
+              <strong className="block text-base font-semibold">Profil adınızı tamamlayın</strong>
+              <p className="mt-1 text-[var(--text-secondary)]">
+                Google hesabınızdan gelen ad otomatik dolduruldu. İsterseniz düzenleyip kaydedin.
+              </p>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                <input
+                  value={profileDraft}
+                  onChange={(event) => setProfileDraft(event.target.value)}
+                  placeholder="Örn: Furkan"
+                  className="min-w-0 flex-1 rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-elevated)] px-4 py-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-border)] focus:ring-4 focus:ring-[var(--accent-soft)]"
+                />
+                <button
+                  type="button"
+                  onClick={saveProfileName}
+                  disabled={profileBusy}
+                  className="rounded-2xl bg-[var(--text-primary)] px-5 py-3 font-medium text-[var(--background)] transition hover:opacity-90"
+                >
+                  {profileBusy ? 'Kaydediliyor...' : 'Profili Kaydet'}
+                </button>
+              </div>
+            </section>
+          ) : null}
+
+          {syncError ? (
+            <section className="rounded-[22px] border border-[color:color-mix(in_srgb,var(--bad)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--bad)_12%,transparent)] px-4 py-3 text-sm text-[var(--text-primary)]">
+              {syncError}
+            </section>
+          ) : null}
+
           <div className={appLocked ? 'pointer-events-none select-none opacity-45 blur-[1px]' : ''}>
           <TradeForm
             draft={draft}
@@ -144,6 +270,7 @@ export default function Dashboard() {
             onChange={setDraft}
             onSubmit={submitTrade}
             onCancelEdit={resetForm}
+            busy={submitBusy}
           />
           </div>
 
@@ -156,10 +283,31 @@ export default function Dashboard() {
               <TradeTable
                 trades={trades}
                 onEdit={handleEdit}
-                onDelete={(id) => {
+                deletingId={deleteBusyId}
+                onDelete={async (id) => {
+                  if (!user) {
+                    return;
+                  }
+
+                  const previousTrade = trades.find((trade) => trade.id === id);
+                  if (!previousTrade) {
+                    return;
+                  }
+
                   removeTrade(id);
+                  setDeleteBusyId(id);
+
                   if (editingTradeId === id) {
                     resetForm();
+                  }
+
+                  try {
+                    await deleteTrade(user.uid, id);
+                  } catch {
+                    addTrade(previousTrade);
+                    setSyncError('İşlem silinirken bir hata oluştu. Tekrar deneyin.');
+                  } finally {
+                    setDeleteBusyId(null);
                   }
                 }}
               />
@@ -172,7 +320,7 @@ export default function Dashboard() {
         </div>
 
           <footer className="mt-8 border-t border-[var(--border-soft)] pt-5 text-center text-sm text-[var(--text-muted)]">
-            made with ❤️ by{' '}
+            Made with ❤️ by{' '}
             <a
               href="https://www.furkan.software/"
               target="_blank"

@@ -5,12 +5,13 @@ import { DIRECTION_META, TradeDirection, TradeDraft, calculateTradeMetrics, form
 interface TradeFormProps {
   draft: TradeDraft;
   editing: boolean;
+  busy: boolean;
   onChange: (draft: TradeDraft) => void;
   onSubmit: () => void;
   onCancelEdit: () => void;
 }
 
-export default function TradeForm({ draft, editing, onChange, onSubmit, onCancelEdit }: TradeFormProps) {
+export default function TradeForm({ draft, editing, busy, onChange, onSubmit, onCancelEdit }: TradeFormProps) {
   const metrics = calculateTradeMetrics(draft);
 
   const setType = (type: TradeDirection) => {
@@ -110,9 +111,10 @@ export default function TradeForm({ draft, editing, onChange, onSubmit, onCancel
           <button
             type="button"
             onClick={onSubmit}
+            disabled={busy}
             className="mt-4 w-full rounded-2xl bg-[linear-gradient(120deg,var(--accent),color-mix(in_srgb,var(--accent)_70%,white))] px-5 py-3 font-mono text-sm font-bold uppercase tracking-[0.22em] text-[var(--accent-contrast)] transition hover:-translate-y-0.5 hover:brightness-105"
           >
-            {editing ? 'İşlemi Güncelle' : 'İşlem Ekle'}
+            {busy ? 'Kaydediliyor...' : editing ? 'İşlemi Güncelle' : 'İşlem Ekle'}
           </button>
 
           {editing ? (
