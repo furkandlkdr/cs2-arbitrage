@@ -5,9 +5,23 @@ import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
 import AuthShell from '@/components/AuthShell';
 import { FIREBASE_READY } from '@/lib/appConfig';
-import { getAuthErrorMessage, loginWithEmail, loginWithGoogle, toAuthErrorCode } from '@/lib/firebase/auth';
+import {
+  getAuthErrorMessage,
+  loginWithEmail,
+  loginWithGoogle,
+  resolveGoogleRedirectResult,
+  toAuthErrorCode,
+} from '@/lib/firebase/auth';
 import { useAuthSync } from '@/hooks/useAuthSync';
 import { useAuthStore } from '@/store/useAuthStore';
+
+const AUTH_DEBUG = process.env.NEXT_PUBLIC_AUTH_DEBUG === 'true';
+
+function formatAuthError(error: unknown) {
+  const code = toAuthErrorCode(error);
+  const baseMessage = getAuthErrorMessage(code);
+  return AUTH_DEBUG ? `${baseMessage} (Hata kodu: ${code})` : baseMessage;
+}
 
 export default function LoginPage() {
   useAuthSync();
@@ -28,11 +42,34 @@ export default function LoginPage() {
       await loginWithGoogle();
       router.replace('/');
     } catch (caughtError) {
-      setError(getAuthErrorMessage(toAuthErrorCode(caughtError)));
+      setError(formatAuthError(caughtError));
     } finally {
       setBusy(false);
     }
   };
+
+  useEffect(() => {
+    let mounted = true;
+
+    const handleRedirectResult = async () => {
+      try {
+        const redirectUser = await resolveGoogleRedirectResult();
+        if (mounted && redirectUser) {
+          router.replace('/');
+        }
+      } catch (caughtError) {
+        if (mounted) {
+          setError(formatAuthError(caughtError));
+        }
+      }
+    };
+
+    void handleRedirectResult();
+
+    return () => {
+      mounted = false;
+    };
+  }, [router]);
 
   useEffect(() => {
     if (initialized && user) {
@@ -57,7 +94,7 @@ export default function LoginPage() {
       await loginWithEmail(normalizedEmail, password);
       router.replace('/');
     } catch (caughtError) {
-      setError(getAuthErrorMessage(toAuthErrorCode(caughtError)));
+      setError(formatAuthError(caughtError));
     } finally {
       setBusy(false);
     }
